@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -29,6 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 
 import sosGame.GameLogic;
 import sosGame.GameLogic.Cell;
@@ -40,13 +43,20 @@ public class Board extends JFrame {
 	public static final int CELL_CENTER = CELL_SIZE / 2;
 	
 	public static final int X_MARGIN = 20;
-	public static final int Y_MARGIN = 20;
+	public static final int Y_MARGIN = 100;
 
 	private int CANVAS_WIDTH; 
 	private int CANVAS_HEIGHT;
 	
 	private int boardSize;
-	private char move;
+	private char move = 'S';
+	private int gameMode;
+	private String currTurn;
+	private ArrayList<int[]> drawQueue = new ArrayList<>();
+	private ArrayList<String> turnQueue = new ArrayList<>();
+	private int bScore = 0;
+	private int rScore = 0;
+	public int endGameOption = 0;	//1 = new game
 
 	private GameBoardCanvas gameBoardCanvas; 
 	private JLabel gameStatusBar; 
@@ -62,16 +72,37 @@ public class Board extends JFrame {
 	private ButtonGroup redGroup;
 	private JRadioButton redSRadio;
 	private JRadioButton redORadio;
+	
+	private JLabel scoreTitle;
+	private JLabel blueDisplayScore;
+	private JLabel redDisplayScore;
+	public static JButton newGameButton;
 
+	private Board myBoard;
+	private GUI myGUI;
 	private GameLogic gameLogic;
-
-	public Board(GameLogic gameLogic) {
-		this.gameLogic = gameLogic;
-		boardSize = gameLogic.getBoardSize();
+	private SimpleGame simpleGame;
+	private GeneralGame	generalGame;
+	
+	public Board(SimpleGame simpleGame) {
+		this.simpleGame = simpleGame;
+		boardSize = simpleGame.getBoardSize();
+		gameMode = simpleGame.getGameMode();
 		setContentPane();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack(); 
-		setTitle("Tic Tac Toe");
+		setTitle("SOS Game");
+		setVisible(true);
+	}
+	
+	public Board(GeneralGame generalGame) {
+		this.generalGame = generalGame;
+		boardSize = generalGame.getBoardSize();
+		gameMode = generalGame.getGameMode();
+		setContentPane();
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		pack(); 
+		setTitle("SOS Game");
 		setVisible(true);  
 	}
 	
@@ -95,7 +126,9 @@ public class Board extends JFrame {
 		blueGroup.add(blueSRadio);
 		blueSRadio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(gameLogic.getTurn() == "Blue") {move = 'S';}
+				if((gameMode == 1 && simpleGame.getTurn() == "Blue") 
+				|| (gameMode == 2 && generalGame.getTurn()== "Blue")) 
+					move = 'S';
 			}
 		});
 		
@@ -104,7 +137,9 @@ public class Board extends JFrame {
 		blueGroup.add(blueORadio);
 		blueORadio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(gameLogic.getTurn() == "Blue") {move = 'O';}
+				if((gameMode == 1 && simpleGame.getTurn() == "Blue")
+				|| (gameMode == 2 && generalGame.getTurn()== "Blue"))
+					move = 'O';
 			}
 		});
 		
@@ -126,7 +161,9 @@ public class Board extends JFrame {
 		redGroup.add(redSRadio);
 		redSRadio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(gameLogic.getTurn() == "Red") {move = 'S';}
+				if((gameMode == 1 && simpleGame.getTurn() == "Red")
+				|| (gameMode == 2 && generalGame.getTurn()== "Red"))		
+					move = 'S';
 			}
 		});
 		
@@ -137,7 +174,9 @@ public class Board extends JFrame {
 		redGroup.add(redORadio);
 		redORadio.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(gameLogic.getTurn() == "Red") {move = 'O';}
+				if((gameMode == 1 && simpleGame.getTurn() == "Red")
+				|| (gameMode == 2 && generalGame.getTurn()== "Red"))		
+					move = 'O';
 			}
 		});
 		
@@ -149,13 +188,27 @@ public class Board extends JFrame {
 		
 		//Set S Radio button for red player selected as default
 		redSRadio.setSelected(true);
-
+		
+		scoreTitle = new JLabel("SCORE:");
+		scoreTitle.setForeground(Color.BLACK);
+		scoreTitle.setBounds(CANVAS_WIDTH / 2, 10, 20, 15);
+		gameBoardCanvas.add(scoreTitle);
+		
+		blueDisplayScore = new JLabel(String.valueOf(bScore));
+		blueDisplayScore.setForeground(Color.BLUE);
+		gameBoardCanvas.add(blueDisplayScore);
+		
+		redDisplayScore = new JLabel(String.valueOf(rScore));
+		redDisplayScore.setForeground(Color.RED);
+		gameBoardCanvas.add(redDisplayScore);
+		
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
 		contentPane.add(gameBoardCanvas, BorderLayout.CENTER);
 		contentPane.add(gameStatusBar, BorderLayout.PAGE_END); 
 		contentPane.add(bluePanel, BorderLayout.WEST);
 		contentPane.add(redPanel, BorderLayout.EAST);
+		contentPane.add(newGameButton, BorderLayout.PAGE_START);
 	}
 	
 	//function to swap 
@@ -185,30 +238,60 @@ public class Board extends JFrame {
 	class GameBoardCanvas extends JPanel {
 
 		GameBoardCanvas(){
-			
-			//Set default move
-			move = 'S';
 
 			
 			addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent e) {  
-					int selectRow = (e.getY() - Y_MARGIN) / CELL_SIZE;
 					int selectCol = (e.getX() - X_MARGIN) / CELL_SIZE;
-											
-					if (gameLogic.getCell(selectRow, selectCol) == Cell.EMPTY) {
-						if (gameLogic.getTurn() == "Red")
-							SwapEnableButtons('B');
-						else
-							SwapEnableButtons('R');
-						System.out.println(selectRow + " " + selectCol);	//test
-						System.out.println(gameLogic.getTurn() + " " + move);		//test
-						gameLogic.makeMove(selectRow, selectCol, move);
-						move = 'S';			//set move back to default
-						repaint();
+					int selectRow = (e.getY() - Y_MARGIN) / CELL_SIZE;
+					
+					if(gameMode == 1) {
+						currTurn = simpleGame.getTurn();
+						if (simpleGame.getCell(selectRow, selectCol) == Cell.EMPTY) {
+							if (currTurn == "Red")
+								SwapEnableButtons('B');
+							else
+								SwapEnableButtons('R');
+							System.out.println(selectRow + " " + selectCol);	//test
+							System.out.println(simpleGame.getTurn() + " " + move);		//test
+							ArrayList<int[]>temp = simpleGame.makeMove(selectRow, selectCol, move);
+							while(!temp.isEmpty()) {
+								drawQueue.add(temp.remove(0));
+								turnQueue.add(currTurn);
+							}
+							repaint();
+							if(simpleGame.getWinner() != "") {
+								winnerPopup(simpleGame.getWinner());
+								
+							}
+							move = 'S';			//set move back to default
+						}
+						else 
+							JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
+									  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
 					}
 					else {
-						JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
-													  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
+						currTurn = generalGame.getTurn();
+						if (generalGame.getCell(selectRow, selectCol) == Cell.EMPTY) {
+							if (currTurn == "Red")
+								SwapEnableButtons('B');
+							else
+								SwapEnableButtons('R');
+							System.out.println(selectRow + " " + selectCol);	//test
+							System.out.println(generalGame.getTurn() + " " + move);		//test
+							ArrayList<int[]>temp = generalGame.makeMove(selectRow, selectCol, move);
+							while(!temp.isEmpty()) {
+								drawQueue.add(temp.remove(0));
+								turnQueue.add(currTurn);
+							}
+							repaint();
+							if(generalGame.getWinner() != "")
+								winnerPopup(generalGame.getWinner());
+							move = 'S';			//set move back to default
+						}
+						else
+							JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
+									  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
 					}
 				}
 			});
@@ -220,7 +303,15 @@ public class Board extends JFrame {
 			setBackground(Color.WHITE);
 			drawGridLines(g);
 			drawBoard(g);
-			DisplayStatus(gameLogic);
+			drawScoringLines(g);
+			if(gameMode == 1) {
+				DisplayStatus(simpleGame);
+				DisplayScore(simpleGame);
+			}
+			else {
+				DisplayStatus(generalGame);
+				DisplayScore(generalGame);
+			}
 		}
 		
 		private void drawGridLines(Graphics g){
@@ -244,20 +335,24 @@ public class Board extends JFrame {
 				for (int col = 0; col < boardSize; ++col) {
 					int x = X_MARGIN + CELL_CENTER + col * CELL_SIZE - 15;
 					int y = Y_MARGIN + CELL_CENTER + row * CELL_SIZE + 15;
-					if (gameLogic.getCell(row, col) == Cell.BLUE_S) {
+					if ((gameMode == 1 && simpleGame.getCell(row, col) == Cell.BLUE_S)
+					||  (gameMode == 2 && generalGame.getCell(row, col)== Cell.BLUE_S)){
 						g.setColor(Color.BLUE);
 						g.drawString(String.valueOf('S'), x, y);
 						
 					}
-					else if (gameLogic.getCell(row, col) == Cell.BLUE_O) {
+					else if ((gameMode == 1 && simpleGame.getCell(row, col) == Cell.BLUE_O) 
+						 ||  (gameMode == 2 && generalGame.getCell(row, col)== Cell.BLUE_O)){
 						g.setColor(Color.BLUE);
 						g.drawString(String.valueOf('O'), x, y);
 					}
-					else if (gameLogic.getCell(row, col) == Cell.RED_S) {
+					else if ((gameMode == 1 && simpleGame.getCell(row, col) == Cell.RED_S) 
+						 ||  (gameMode == 2 && generalGame.getCell(row, col)== Cell.RED_S)){
 						g.setColor(Color.RED);
 						g.drawString(String.valueOf('S'), x, y);
 					}
-					else if (gameLogic.getCell(row, col) == Cell.RED_O) {
+					else if ((gameMode == 1 && simpleGame.getCell(row, col) == Cell.RED_O)
+						 ||	 (gameMode == 2 && generalGame.getCell(row, col)== Cell.RED_O)){
 						g.setColor(Color.RED);
 						g.drawString(String.valueOf('O'), x, y);
 					}
@@ -267,12 +362,48 @@ public class Board extends JFrame {
 			}
 		}
 		
+		private void drawScoringLines(Graphics g) {
+			if(drawQueue == null)
+				return;
+			
+			int[] coords;
+			int firstX, firstY, secondX, secondY;
+			g.setFont(new Font("TimesRoman", Font.PLAIN, 40));			
+			for(int i = 0; i < drawQueue.size(); i++) {
+				if(turnQueue.get(i) == "Blue")
+					g.setColor(Color.BLUE);
+				else
+					g.setColor(Color.RED);
+				coords = drawQueue.get(i);
+				firstX = X_MARGIN + CELL_CENTER + coords[0] * CELL_SIZE;
+				firstY = Y_MARGIN + CELL_CENTER + coords[1] * CELL_SIZE;
+				secondX = X_MARGIN + CELL_CENTER + coords[2] * CELL_SIZE;
+				secondY = Y_MARGIN + CELL_CENTER + coords[3] * CELL_SIZE;
+				
+				g.drawLine(firstX, firstY, secondX, secondY);
+				System.out.println("drawing lines");		//test
+			}
+		}
+		
 		//function to change current game's status
 		private void DisplayStatus(GameLogic gameLogic) {
 			String currMode;
 			currMode = ((gameLogic.getGameMode() == 1) ? "Simple Mode" : "General Mode");
 			gameStatusBar.setText("Current Player: " + gameLogic.getTurn() + "    ||    " + "Game Mode : " + currMode);
 		}
-
+		
+		private void DisplayScore(GameLogic gameLogic) {
+			blueDisplayScore.setText(String.valueOf(gameLogic.getBlueScore()));
+			redDisplayScore.setText(String.valueOf(gameLogic.getRedScore()));
+		}
+		
+		private void winnerPopup(String winner) {
+			if(winner == "Tie")
+				JOptionPane.showMessageDialog(null," Game Over! The game has ended with a tie!",
+					  "Game Over!", JOptionPane.INFORMATION_MESSAGE);
+			else
+				JOptionPane.showMessageDialog(null, winner + " player won the game!",
+					  "Congratulation!", JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 }

@@ -1,3 +1,8 @@
+//Project: SOS_Game
+//Instructor: Leo Chen
+//Student: Phan Ha
+//CS 499
+
 package sosGame;
 
 import java.awt.EventQueue;
@@ -44,9 +49,11 @@ public class GUI extends JFrame {
 	
 	private int boardSize;
 	private int gameMode;		//1-Simple Mode, 2-General Mode
+	public static int endGameOption = 0;	//1 = new game
 	
-	private GameLogic myGame;
-	private Board myBoard;
+	public SimpleGame myGameSimple;
+	private GeneralGame myGameGeneral;
+	public Board myBoard;
 	
 	//Define panel and its components
 	private JPanel uiPanel;
@@ -119,25 +126,36 @@ public class GUI extends JFrame {
 		requirement.setBounds(220, 30, 200, 15);
 		uiPanel.add(requirement);
 		
+		Board.newGameButton = new JButton("New Game");
+		Board.newGameButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				myBoard.dispose();
+				setVisible(true);
+			}
+		});
+		
 		//setup the button to start game
 		startGameButton = new JButton("Start Game");
 		startGameButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				try {
 					boardSize = Integer.parseInt(sizeTextField.getText());
 					if(boardSize >= 3 && boardSize <= 10) {
-						myGame = new GameLogic(boardSize);
-						myGame.setGameMode(gameMode);
-						myBoard = new Board(myGame);
-						setVisible(false);
+							if(gameMode == 1) {
+								myGameSimple = new SimpleGame(boardSize);
+								myGameSimple.setGameMode(gameMode);
+								myBoard = new Board(myGameSimple);
+							}
+							else {
+								myGameGeneral = new GeneralGame(boardSize);
+								myGameGeneral.setGameMode(gameMode);
+								myBoard = new Board(myGameGeneral);
+							}
+							setVisible(false);
 					}
 					else {
 						JOptionPane.showMessageDialog(null, "Invalid board size!\nPlease choose a valid board size.",
 								  "Invalid Value", JOptionPane.INFORMATION_MESSAGE);
 					}
-				}catch(Exception err) {
-					
-				}
 			}
 		});
 		startGameButton.setBounds(50, 90, 120, 25);
@@ -160,12 +178,8 @@ public class GUI extends JFrame {
 		public static void main(String[] args) {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
-					try {
 						GUI frame = new GUI();
 						frame.setVisible(true);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
 				}
 			});
 		}
