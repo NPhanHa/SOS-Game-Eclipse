@@ -42,7 +42,7 @@ public class Board extends JFrame {
 	public static final int CELL_SIZE = 100; 
 	public static final int CELL_CENTER = CELL_SIZE / 2;
 	
-	public static final int X_MARGIN = 20;
+	public static final int X_MARGIN = 100;
 	public static final int Y_MARGIN = 100;
 
 	private int CANVAS_WIDTH; 
@@ -242,8 +242,18 @@ public class Board extends JFrame {
 			
 			addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent e) {  
-					int selectCol = (e.getX() - X_MARGIN) / CELL_SIZE;
-					int selectRow = (e.getY() - Y_MARGIN) / CELL_SIZE;
+					int selectCol = -1; 
+					int selectRow = -1;
+					
+					if(e.getX() >= X_MARGIN && e.getX() <= CANVAS_WIDTH - X_MARGIN 
+					&& e.getY() >= Y_MARGIN && e.getY() <= CANVAS_HEIGHT - Y_MARGIN) {
+						selectCol = (e.getX() - X_MARGIN) / CELL_SIZE;
+						selectRow = (e.getY() - Y_MARGIN) / CELL_SIZE;
+					}
+					
+					if(selectCol == -1 || selectRow == -1) {
+						return;
+					}
 					
 					if(gameMode == 1) {
 						currTurn = simpleGame.getTurn();
