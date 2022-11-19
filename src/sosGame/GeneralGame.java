@@ -10,6 +10,8 @@ public class GeneralGame extends GameLogic{
 		initBoard();
 	}
 	
+	public int ShowPlay() {return plays;}
+	
 	//function to register info to a specific cell
 	public ArrayList<int[]> makeMove(int row, int column, char move) {
 		String currTurn = this.turn;

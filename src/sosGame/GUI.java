@@ -20,6 +20,8 @@ import java.awt.GridLayout;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -30,6 +32,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.ActionEvent;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
@@ -50,6 +54,8 @@ public class GUI extends JFrame {
 	private int boardSize;
 	private int gameMode;		//1-Simple Mode, 2-General Mode
 	public static int endGameOption = 0;	//1 = new game
+	public static int compPlayer = 0;		//0 - no computer; 1 - blue computer 
+											//2 - red computer; 3 - two computers
 	
 	public SimpleGame myGameSimple;
 	private GeneralGame myGameGeneral;
@@ -61,8 +67,11 @@ public class GUI extends JFrame {
 	private JLabel gameLabel;
 	private JLabel requirement;
 	private JLabel boardSizeLabel;
+	private JLabel computerPlayerLabel;
 	private JRadioButton simpleGameRadio;
 	private JRadioButton generalGameRadio;
+	private JCheckBox blueCompCheck;
+	private JCheckBox redCompCheck;
 	private final ButtonGroup gameModeGroup = new ButtonGroup();
 	private JButton startGameButton;
 	private JButton clearButton;
@@ -76,7 +85,7 @@ public class GUI extends JFrame {
 		//setup panel
 		setTitle("TicTacToe");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 400, 200);
+		setBounds(100, 100, 400, 300);
 		uiPanel = new JPanel();
 		uiPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(uiPanel);
@@ -126,6 +135,34 @@ public class GUI extends JFrame {
 		requirement.setBounds(220, 30, 200, 15);
 		uiPanel.add(requirement);
 		
+		//setup label for computer players
+		computerPlayerLabel = new JLabel("Computer Player:");
+		computerPlayerLabel.setBounds(10, 90, 100, 15);
+		uiPanel.add(computerPlayerLabel);
+		
+		//setup check box for blue computer player
+		blueCompCheck = new JCheckBox("Blue Computer");
+		blueCompCheck.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if	 (blueCompCheck.isSelected() == true) {compPlayer += 1;}
+				else {compPlayer -= 1;}
+			}
+			});
+		blueCompCheck.setBounds(10, 110, 150, 15);
+		uiPanel.add(blueCompCheck);
+		
+		//setup check box for red computer player
+				redCompCheck = new JCheckBox("Red Computer");
+				redCompCheck.addItemListener(new ItemListener() {
+					public void itemStateChanged(ItemEvent e) {
+						if	 (redCompCheck.isSelected() == true) {compPlayer += 2;}
+						else {compPlayer -= 2;}
+					}
+					});
+				redCompCheck.setBounds(10, 130, 150, 15);
+				uiPanel.add(redCompCheck);
+		
+		
 		Board.newGameButton = new JButton("New Game");
 		Board.newGameButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -158,7 +195,7 @@ public class GUI extends JFrame {
 					}
 			}
 		});
-		startGameButton.setBounds(50, 90, 120, 25);
+		startGameButton.setBounds(50, 200, 120, 25);
 		uiPanel.add(startGameButton);
 		
 		//setup the button to clear all the options and return to default setting
@@ -170,7 +207,7 @@ public class GUI extends JFrame {
 				gameMode = 1;
 			}
 		});
-		clearButton.setBounds(200, 90, 120, 25);
+		clearButton.setBounds(200, 200, 120, 25);
 		uiPanel.add(clearButton);
 	}
 	

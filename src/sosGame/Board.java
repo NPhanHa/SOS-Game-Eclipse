@@ -18,6 +18,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -42,8 +44,8 @@ public class Board extends JFrame {
 	public static final int CELL_SIZE = 100; 
 	public static final int CELL_CENTER = CELL_SIZE / 2;
 	
-	public static final int X_MARGIN = 100;
-	public static final int Y_MARGIN = 100;
+	public static final int X_MARGIN = 20;
+	public static final int Y_MARGIN = 50;
 
 	private int CANVAS_WIDTH; 
 	private int CANVAS_HEIGHT;
@@ -83,27 +85,50 @@ public class Board extends JFrame {
 	private GameLogic gameLogic;
 	private SimpleGame simpleGame;
 	private GeneralGame	generalGame;
+	private AI myAI;
 	
 	public Board(SimpleGame simpleGame) {
 		this.simpleGame = simpleGame;
 		boardSize = simpleGame.getBoardSize();
 		gameMode = simpleGame.getGameMode();
+		currTurn = simpleGame.getTurn();
+		myAI = new AI(simpleGame);
 		setContentPane();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack(); 
 		setTitle("SOS Game");
 		setVisible(true);
+		if(GUI.compPlayer == 1) {
+			gameBoardCanvas.ComputerPlay();
+			gameBoardCanvas.clear = false;
+		}
+		if(GUI.compPlayer == 3) {
+			while(gameBoardCanvas.winner == "") {
+				gameBoardCanvas.ComputerPlay();
+			}
+		}
 	}
 	
 	public Board(GeneralGame generalGame) {
 		this.generalGame = generalGame;
 		boardSize = generalGame.getBoardSize();
 		gameMode = generalGame.getGameMode();
+		currTurn = generalGame.getTurn();
+		myAI = new AI(generalGame);
 		setContentPane();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack(); 
 		setTitle("SOS Game");
-		setVisible(true);  
+		setVisible(true); 
+		if(GUI.compPlayer == 1) {
+			gameBoardCanvas.ComputerPlay();
+			gameBoardCanvas.clear = false;
+		}
+		if(GUI.compPlayer == 3) {
+			while(gameBoardCanvas.winner == "") {
+				gameBoardCanvas.ComputerPlay();
+			}
+		}
 	}
 	
 	private void setContentPane(){
@@ -237,13 +262,17 @@ public class Board extends JFrame {
 
 	class GameBoardCanvas extends JPanel {
 
+		int selectCol = -1; 
+		int selectRow = -1;
+		boolean clear = true;
+		String winner = "";
+		
 		GameBoardCanvas(){
-
 			
 			addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent e) {  
-					int selectCol = -1; 
-					int selectRow = -1;
+					
+					System.out.println("Current Turn: " + currTurn);	//test
 					
 					if(e.getX() >= X_MARGIN && e.getX() <= CANVAS_WIDTH - X_MARGIN 
 					&& e.getY() >= Y_MARGIN && e.getY() <= CANVAS_HEIGHT - Y_MARGIN) {
@@ -251,61 +280,125 @@ public class Board extends JFrame {
 						selectRow = (e.getY() - Y_MARGIN) / CELL_SIZE;
 					}
 					
-					if(selectCol == -1 || selectRow == -1) {
-						return;
-					}
+					if(selectCol == -1 || selectRow == -1)   {return;}
 					
-					if(gameMode == 1) {
-						currTurn = simpleGame.getTurn();
-						if (simpleGame.getCell(selectRow, selectCol) == Cell.EMPTY) {
-							if (currTurn == "Red")
-								SwapEnableButtons('B');
-							else
-								SwapEnableButtons('R');
-							System.out.println(selectRow + " " + selectCol);	//test
-							System.out.println(simpleGame.getTurn() + " " + move);		//test
-							ArrayList<int[]>temp = simpleGame.makeMove(selectRow, selectCol, move);
-							while(!temp.isEmpty()) {
-								drawQueue.add(temp.remove(0));
-								turnQueue.add(currTurn);
-							}
-							repaint();
-							if(simpleGame.getWinner() != "") {
-								winnerPopup(simpleGame.getWinner());
-								
-							}
-							move = 'S';			//set move back to default
-						}
-						else 
-							JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
-									  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
-					}
-					else {
-						currTurn = generalGame.getTurn();
-						if (generalGame.getCell(selectRow, selectCol) == Cell.EMPTY) {
-							if (currTurn == "Red")
-								SwapEnableButtons('B');
-							else
-								SwapEnableButtons('R');
-							System.out.println(selectRow + " " + selectCol);	//test
-							System.out.println(generalGame.getTurn() + " " + move);		//test
-							ArrayList<int[]>temp = generalGame.makeMove(selectRow, selectCol, move);
-							while(!temp.isEmpty()) {
-								drawQueue.add(temp.remove(0));
-								turnQueue.add(currTurn);
-							}
-							repaint();
-							if(generalGame.getWinner() != "")
-								winnerPopup(generalGame.getWinner());
-							move = 'S';			//set move back to default
-						}
-						else
-							JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
-									  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
-					}
+					clear = HumanPlay(selectRow, selectCol);
+					if(GUI.compPlayer == 1 && clear == true) {ComputerPlay();}
+					if(GUI.compPlayer == 2 && clear == true) {ComputerPlay();}
+					
 				}
 			});
 		}
+		
+		private boolean HumanPlay(int selectRow, int selectCol) {
+			if(gameMode == 1) {
+				if (simpleGame.getCell(selectRow, selectCol) == Cell.EMPTY) {
+					if (currTurn == "Red")
+						SwapEnableButtons('B');
+					else
+						SwapEnableButtons('R');
+					System.out.println(selectRow + " " + selectCol);	//test
+					System.out.println(simpleGame.getTurn() + " " + move);		//test
+					ArrayList<int[]>temp = simpleGame.makeMove(selectRow, selectCol, move);
+					while(!temp.isEmpty()) {
+						drawQueue.add(temp.remove(0));
+						turnQueue.add(currTurn);
+					}
+					repaint();
+					if(simpleGame.getWinner() != "") {
+						winnerPopup(simpleGame.getWinner());
+						return false;
+					}
+					move = 'S';			//set move back to default
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
+							  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
+					return false;
+				}
+				currTurn = simpleGame.getTurn();
+			}
+			else {
+				if (generalGame.getCell(selectRow, selectCol) == Cell.EMPTY) {
+					if (currTurn == "Red")
+						SwapEnableButtons('B');
+					else
+						SwapEnableButtons('R');
+					System.out.println(selectRow + " " + selectCol);	//test
+					System.out.println(generalGame.getTurn() + " " + move);		//test
+					ArrayList<int[]>temp = generalGame.makeMove(selectRow, selectCol, move);
+					while(!temp.isEmpty()) {
+						drawQueue.add(temp.remove(0));
+						turnQueue.add(currTurn);
+					}
+					repaint();
+					if(generalGame.getWinner() != "") {
+						winnerPopup(generalGame.getWinner());
+						return false;
+					}
+					move = 'S';			//set move back to default
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "This cell is occupied!\nPlease choose an empty cell.",
+							  "Invalid Move", JOptionPane.INFORMATION_MESSAGE);
+					return false;
+				}
+				currTurn = generalGame.getTurn();
+			}
+			return true;
+		}
+		
+		private void ComputerPlay() {
+			int x = selectCol;
+			int y = selectRow;
+			
+			if (currTurn == "Red")
+				SwapEnableButtons('B');
+			else
+				SwapEnableButtons('R');
+			
+			if(x == -1 || y == -1) {
+				myAI.PlayRandom();
+				selectCol = myAI.getPastX();
+				selectRow = myAI.getPastY();
+			}
+			else {
+				if(gameMode == 1) {
+					ArrayList<int[]>temp = myAI.computerPlaySimple(y, x);
+					while(!temp.isEmpty()) {
+						drawQueue.add(temp.remove(0));
+						turnQueue.add(currTurn);
+					}
+					repaint();
+					if(simpleGame.getWinner() != "") {
+						winner = simpleGame.getWinner();
+						winnerPopup(winner);
+					}
+					move = 'S';			//set move back to default
+					currTurn = simpleGame.getTurn();
+					selectCol = myAI.getPastX();
+					selectRow = myAI.getPastY();
+				}
+				else {
+					ArrayList<int[]>temp = myAI.computerPlayGeneral(y, x);
+					while(!temp.isEmpty()) {
+						drawQueue.add(temp.remove(0));
+						turnQueue.add(currTurn);
+					}
+					repaint();
+					if(generalGame.getWinner() != "") {
+						winner = generalGame.getWinner();
+						winnerPopup(winner);
+					}
+					move = 'S';			//set move back to default
+					currTurn = generalGame.getTurn();
+					selectCol = myAI.getPastX();
+					selectRow = myAI.getPastY();
+					System.out.println("Play #: " + generalGame.ShowPlay());		//test
+				}
+			}
+		}
+		
 
 		@Override
 		public void paintComponent(Graphics g) { 
@@ -391,15 +484,22 @@ public class Board extends JFrame {
 				secondY = Y_MARGIN + CELL_CENTER + coords[3] * CELL_SIZE;
 				
 				g.drawLine(firstX, firstY, secondX, secondY);
-				System.out.println("drawing lines");		//test
+				//System.out.println("drawing lines");		//test
 			}
 		}
 		
 		//function to change current game's status
 		private void DisplayStatus(GameLogic gameLogic) {
 			String currMode;
+			String compPlayer;
+			if(GUI.compPlayer == 0) {compPlayer = "None";}
+			else if(GUI.compPlayer == 1) {compPlayer = "Blue";}
+			else if(GUI.compPlayer == 2) {compPlayer = "Red";}
+			else {compPlayer = "Blue & Red";}
 			currMode = ((gameLogic.getGameMode() == 1) ? "Simple Mode" : "General Mode");
-			gameStatusBar.setText("Current Player: " + gameLogic.getTurn() + "    ||    " + "Game Mode : " + currMode);
+			gameStatusBar.setText("Current Player: " + gameLogic.getTurn() + 
+					              "    ||    " + "Game Mode : " + currMode +
+								  "    ||    " + "Computer Player: " + compPlayer);
 		}
 		
 		private void DisplayScore(GameLogic gameLogic) {
