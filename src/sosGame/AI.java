@@ -13,14 +13,14 @@ public class AI {
 	private GeneralGame generalGame;
 	private int pastX, pastY;
 	
-	AI(SimpleGame simpleGame){
+	public AI(SimpleGame simpleGame){
 		this.gameMode = 1;
 		this.simpleGame = simpleGame;
 		this.boardSize = simpleGame.getBoardSize();
 		random = new Random();
 	}
 	
-	AI(GeneralGame generalGame){
+	public AI(GeneralGame generalGame){
 		this.gameMode = 2;
 		this.generalGame = generalGame;
 		this.boardSize = generalGame.getBoardSize();

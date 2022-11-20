@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import sosGame.SimpleGame;
-import sosGame.Board;
 import sosGame.Console;
 
 public class TestSimpleScore {
