@@ -57,7 +57,7 @@ public class GUI extends JFrame {
 	public static int compPlayer = 0;		//0 - no computer; 1 - blue computer 
 											//2 - red computer; 3 - two computers
 	
-	private SimpleGame myGameSimple;
+	public SimpleGame myGameSimple;
 	private GeneralGame myGameGeneral;
 	public Board myBoard;
 	
