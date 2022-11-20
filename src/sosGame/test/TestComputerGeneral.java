@@ -17,7 +17,7 @@ public class TestComputerGeneral {
 
 	@Before
 	public void SetUp() throws Exception {
-		testGeneralGame = new SimpleGame(6);
+		testGeneralGame = new SimpleGame(3);
 		testGeneralGame.setGameMode(1);
 		myAI = new AI(testGeneralGame);
 	}
@@ -30,10 +30,15 @@ public class TestComputerGeneral {
 	//Testing the algorithm if computer is trying to win
 	public void testComputerWin() {
 		
-		testGeneralGame.makeMove(0, 1, 'S');
-		myAI.computerPlaySimple(0, 1);
-		testGeneralGame.makeMove(0, 3, 'S');
-		myAI.computerPlaySimple(0, 3);
+		testGeneralGame.makeMove(0, 0, 'S');
+		myAI.computerPlaySimple(0, 0);
+		testGeneralGame.makeMove(0, 2, 'S');
+		myAI.computerPlaySimple(0, 2);
+		testGeneralGame.makeMove(2, 2, 'S');
+		myAI.computerPlaySimple(2, 2);
+		testGeneralGame.makeMove(2, 0, 'S');
+		myAI.computerPlaySimple(2, 0);
+		testGeneralGame.makeMove(1, 1, 'S');
 		
 		myConsole = new Console(testGeneralGame);
 		myConsole.displayBoard();
