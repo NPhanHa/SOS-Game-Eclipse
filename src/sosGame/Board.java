@@ -90,9 +90,6 @@ public class Board extends JFrame {
 	private JLabel redDisplayScore;
 	public static JButton newGameButton;
 
-	private Board myBoard;
-	private GUI myGUI;
-	private GameLogic gameLogic;
 	private SimpleGame simpleGame;
 	private GeneralGame	generalGame;
 	private AI myAI;
