@@ -9,6 +9,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JCheckBox;
 
 import javax.swing.JSeparator;
 import java.awt.GridLayout;
@@ -18,6 +19,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.awt.BasicStroke;
@@ -34,6 +36,12 @@ import javax.swing.JRadioButton;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 import sosGame.GameLogic;
 import sosGame.GameLogic.Cell;
@@ -56,6 +64,8 @@ public class Board extends JFrame {
 	private String currTurn;
 	private ArrayList<int[]> drawQueue = new ArrayList<>();
 	private ArrayList<String> turnQueue = new ArrayList<>();
+	private ArrayList<int[]> coordLog = new ArrayList<>();
+	private ArrayList<Character> moveLog = new ArrayList<>();
 	private int bScore = 0;
 	private int rScore = 0;
 	public int endGameOption = 0;	//1 = new game
@@ -86,6 +96,8 @@ public class Board extends JFrame {
 	private SimpleGame simpleGame;
 	private GeneralGame	generalGame;
 	private AI myAI;
+	
+	private BufferedWriter writer;
 	
 	public Board(SimpleGame simpleGame) {
 		this.simpleGame = simpleGame;
@@ -305,6 +317,8 @@ public class Board extends JFrame {
 						turnQueue.add(currTurn);
 					}
 					repaint();
+					coordLog.add(new int[] {selectRow, selectCol});
+					moveLog.add(move);
 					if(simpleGame.getWinner() != "") {
 						winnerPopup(simpleGame.getWinner());
 						return false;
@@ -332,6 +346,8 @@ public class Board extends JFrame {
 						turnQueue.add(currTurn);
 					}
 					repaint();
+					coordLog.add(new int[] {selectRow, selectCol});
+					moveLog.add(move);
 					if(generalGame.getWinner() != "") {
 						winnerPopup(generalGame.getWinner());
 						return false;
@@ -361,10 +377,16 @@ public class Board extends JFrame {
 				myAI.PlayRandom();
 				selectCol = myAI.getPastX();
 				selectRow = myAI.getPastY();
+				coordLog.add(new int[] {selectCol, selectRow});
+				moveLog.add(myAI.getMove());
 			}
 			else {
 				if(gameMode == 1) {
 					ArrayList<int[]>temp = myAI.computerPlaySimple(y, x);
+					selectCol = myAI.getPastX();
+					selectRow = myAI.getPastY();
+					coordLog.add(new int[] {selectCol, selectRow});
+					moveLog.add(myAI.getMove());
 					while(!temp.isEmpty()) {
 						drawQueue.add(temp.remove(0));
 						turnQueue.add(currTurn);
@@ -376,11 +398,13 @@ public class Board extends JFrame {
 					}
 					move = 'S';			//set move back to default
 					currTurn = simpleGame.getTurn();
-					selectCol = myAI.getPastX();
-					selectRow = myAI.getPastY();
 				}
 				else {
 					ArrayList<int[]>temp = myAI.computerPlayGeneral(y, x);
+					selectCol = myAI.getPastX();
+					selectRow = myAI.getPastY();
+					coordLog.add(new int[] {selectCol, selectRow});
+					moveLog.add(myAI.getMove());
 					while(!temp.isEmpty()) {
 						drawQueue.add(temp.remove(0));
 						turnQueue.add(currTurn);
@@ -392,8 +416,6 @@ public class Board extends JFrame {
 					}
 					move = 'S';			//set move back to default
 					currTurn = generalGame.getTurn();
-					selectCol = myAI.getPastX();
-					selectRow = myAI.getPastY();
 					System.out.println("Play #: " + generalGame.ShowPlay());		//test
 				}
 			}
@@ -514,6 +536,30 @@ public class Board extends JFrame {
 			else
 				JOptionPane.showMessageDialog(null, winner + " player won the game!",
 					  "Congratulation!", JOptionPane.INFORMATION_MESSAGE);
+			printLog();
+		}
+		
+		private void printLog() {
+			Date date = new Date();
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+			File file;
+			String player = "Blue";
+			if(gameMode == 1) {file = new File("Simple_" + dateFormat.format(date) + ".txt");}
+			else			  {file = new File("General_" + dateFormat.format(date) + ".txt");}
+			
+			try {
+				BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+				int[] coord;
+				for(int i = 0; i < coordLog.size(); i++) {
+					coord = coordLog.get(i);
+					writer.write(player + ": (" + coord[0] + "," + coord[1] + ") " + moveLog.get(i) + "\n");
+					if(player == "Blue") {player = "Red ";}
+					else				 {player = "Blue";}
+				}
+				writer.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 	}
 }

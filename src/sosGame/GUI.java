@@ -56,6 +56,7 @@ public class GUI extends JFrame {
 	public static int endGameOption = 0;	//1 = new game
 	public static int compPlayer = 0;		//0 - no computer; 1 - blue computer 
 											//2 - red computer; 3 - two computers
+	public static int recordOption = 0;
 	
 	public SimpleGame myGameSimple;
 	private GeneralGame myGameGeneral;
@@ -75,6 +76,7 @@ public class GUI extends JFrame {
 	private final ButtonGroup gameModeGroup = new ButtonGroup();
 	private JButton startGameButton;
 	private JButton clearButton;
+	private JCheckBox recordCheck;
 	
 	 /*Create Frame */
 	public GUI() {
@@ -152,17 +154,27 @@ public class GUI extends JFrame {
 		uiPanel.add(blueCompCheck);
 		
 		//setup check box for red computer player
-				redCompCheck = new JCheckBox("Red Computer");
-				redCompCheck.addItemListener(new ItemListener() {
-					public void itemStateChanged(ItemEvent e) {
-						if	 (redCompCheck.isSelected() == true) {compPlayer += 2;}
-						else {compPlayer -= 2;}
-					}
-					});
-				redCompCheck.setBounds(10, 130, 150, 15);
-				uiPanel.add(redCompCheck);
+		redCompCheck = new JCheckBox("Red Computer");
+		redCompCheck.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if	 (redCompCheck.isSelected() == true) {compPlayer += 2;}
+				else {compPlayer -= 2;}
+			}
+		});
+		redCompCheck.setBounds(10, 130, 150, 15);
+		uiPanel.add(redCompCheck);
+				
+		recordCheck = new JCheckBox("Record Game");
+		recordCheck.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if   (recordCheck.isSelected() == true) {recordOption += 1;}
+				else {recordOption -= 1;}
+			}
+		});
+		recordCheck.setBounds(220, 110, 150, 15);
+		uiPanel.add(recordCheck);
 		
-		
+				
 		Board.newGameButton = new JButton("New Game");
 		Board.newGameButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {

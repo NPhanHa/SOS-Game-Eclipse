@@ -12,6 +12,7 @@ public class AI {
 	private SimpleGame simpleGame;
 	private GeneralGame generalGame;
 	private int pastX, pastY;
+	private char compMove;
 	
 	public AI(SimpleGame simpleGame){
 		this.gameMode = 1;
@@ -30,6 +31,8 @@ public class AI {
 	public int getPastX() {return pastX;}
 	
 	public int getPastY() {return pastY;}
+	
+	public char getMove() {return compMove;}
 	
 	//Function let computer play in simple mode
 	public ArrayList<int[]> computerPlaySimple(int x, int y) {
@@ -52,7 +55,10 @@ public class AI {
 						
 						if(simpleGame.getCell(x + i + i, y + j + j) == Cell.EMPTY) {
 							System.out.println("Got it right");		//test
-						   return simpleGame.makeMove(x + i + i, y + j + j, 'S');
+							compMove = 'S';
+							pastX = x + i + i;
+							pastY = y + j + j;
+						   return simpleGame.makeMove(pastX, pastY, compMove);
 						}
 						else
 							continue;
@@ -62,7 +68,10 @@ public class AI {
 								
 						if(simpleGame.getCell(x + i, y + j) == Cell.EMPTY) {
 							System.out.println("Got it right");		//test
-						   return simpleGame.makeMove(x + i, y + j, 'O');
+							compMove = 'O';
+							pastX = x + i;
+							pastY = y + j;
+						   return simpleGame.makeMove(pastX, pastY, compMove);
 						}
 						else
 							continue;
@@ -85,7 +94,11 @@ public class AI {
 					   simpleGame.getCell(x + i, y + j) == Cell.RED_S) {
 						if(simpleGame.getCell(x - i, y - j) == Cell.EMPTY) {
 							System.out.println("Got it right");		//test
-							return simpleGame.makeMove(x - i, y - j, 'S');
+							compMove = 'S';
+							pastX = x - i;
+							pastY = y - j;
+							System.out.println(pastX + "," + pastY);		//test
+							return simpleGame.makeMove(x - i, y - j, compMove);
 						}
 						else
 							continue;
@@ -117,7 +130,10 @@ public class AI {
 						
 						if(generalGame.getCell(x + i + i, y + j + j) == Cell.EMPTY) {
 							System.out.println("Got it right");		//test
-						   return generalGame.makeMove(x + i + i, y + j + j, 'S');
+							compMove = 'S';
+							pastX = x + i + i;
+							pastY = y + j + j;
+						   return generalGame.makeMove(pastX, pastY, compMove);
 						}
 						else
 							continue;
@@ -127,7 +143,10 @@ public class AI {
 								
 						if(generalGame.getCell(x + i, y + j) == Cell.EMPTY) {
 							System.out.println("Got it right");		//test
-						   return generalGame.makeMove(x + i, y + j, 'O');
+							compMove = 'O';
+							pastX = x + i;
+							pastY = y + j;
+						   return generalGame.makeMove(pastX, pastY, compMove);
 						}
 						else
 							continue;
@@ -150,7 +169,10 @@ public class AI {
 					   generalGame.getCell(x + i, y + j) == Cell.RED_S) {
 						if(generalGame.getCell(x - i, y - j) == Cell.EMPTY) {
 							System.out.println("Got it right");		//test
-							return generalGame.makeMove(x - i, y - j, 'S');
+							compMove = 'S';
+							pastX = x - i;
+							pastY = y - j;
+							return generalGame.makeMove(pastX, pastY, compMove);
 						}
 						else
 							continue;
@@ -178,7 +200,8 @@ public class AI {
 					System.out.println("Random Char: " + computerMove.charAt(randMove));  //test
 					pastX = randX;
 					pastY = randY;
-					temp = simpleGame.makeMove(randX, randY, computerMove.charAt(randMove));
+					compMove = computerMove.charAt(randMove);
+					temp = simpleGame.makeMove(randX, randY, compMove);
 					break;
 				}
 			}
@@ -188,7 +211,8 @@ public class AI {
 					System.out.println("Random Char: " + computerMove.charAt(randMove));  //test
 					pastX = randX;
 					pastY = randY;
-					temp = generalGame.makeMove(randX, randY, computerMove.charAt(randMove));
+					compMove = computerMove.charAt(randMove);
+					temp = generalGame.makeMove(randX, randY, compMove);
 					break;
 				}
 			}
