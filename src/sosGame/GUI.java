@@ -147,7 +147,7 @@ public class GUI extends JFrame {
 		
 		//setup label for computer players
 		computerPlayerLabel = new JLabel("Computer Player:");
-		computerPlayerLabel.setBounds(10, 90, 100, 15);
+		computerPlayerLabel.setBounds(10, 90, 150, 15);
 		uiPanel.add(computerPlayerLabel);
 		
 		//setup check box for blue computer player
@@ -215,7 +215,7 @@ public class GUI extends JFrame {
 					}
 			}
 		});
-		startGameButton.setBounds(50, 200, 120, 25);
+		startGameButton.setBounds(50, 200, 140, 25);
 		uiPanel.add(startGameButton);
 		
 		//setup the button to clear all the options and return to default setting
@@ -227,7 +227,7 @@ public class GUI extends JFrame {
 				gameMode = 1;
 			}
 		});
-		clearButton.setBounds(120, 250, 120, 25);
+		clearButton.setBounds(120, 250, 140, 25);
 		uiPanel.add(clearButton);
 		
 		replayButton = new JButton("Replay Game");
@@ -245,7 +245,7 @@ public class GUI extends JFrame {
 				}
 			}
 		});
-		replayButton.setBounds(200, 200, 120, 25);
+		replayButton.setBounds(200, 200, 140, 25);
 		uiPanel.add(replayButton);
 	}
 	

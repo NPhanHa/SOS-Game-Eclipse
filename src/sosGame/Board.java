@@ -116,7 +116,7 @@ public class Board extends JFrame {
 		pack(); 
 		setTitle("SOS Game");
 		setVisible(true);
-		if(GUI.compPlayer == 1) {
+		if(GUI.compPlayer == 1 && replayBit == 0) {
 			int delay = 1000;
 			Timer timer = new Timer( delay, new ActionListener() {
 				public void actionPerformed(ActionEvent ae) {gameBoardCanvas.ComputerPlay();}
@@ -125,7 +125,7 @@ public class Board extends JFrame {
 			timer.start();
 			gameBoardCanvas.clear = false;
 		}
-		if(GUI.compPlayer == 3) {
+		if(GUI.compPlayer == 3 && replayBit == 0) {
 			java.util.Timer delay = new java.util.Timer();
 			delay.schedule(new TimerTask() {
 				public void run() {
