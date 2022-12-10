@@ -21,6 +21,7 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
@@ -30,6 +31,7 @@ import java.awt.Dimension;
 
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
@@ -69,6 +71,12 @@ public class Board extends JFrame {
 	private int bScore = 0;
 	private int rScore = 0;
 	public int endGameOption = 0;	//1 = new game
+	private int replayBit = 0;
+	
+	private int[] replayCoord;
+	private char replayMove;
+	private ArrayList<int[]> replayTemp = new ArrayList<>();
+	private int iter = 0;
 
 	private GameBoardCanvas gameBoardCanvas; 
 	private JLabel gameStatusBar; 
@@ -96,8 +104,9 @@ public class Board extends JFrame {
 	
 	private BufferedWriter writer;
 	
-	public Board(SimpleGame simpleGame) {
+	public Board(SimpleGame simpleGame, int replayBit) {
 		this.simpleGame = simpleGame;
+		this.replayBit = replayBit;
 		boardSize = simpleGame.getBoardSize();
 		gameMode = simpleGame.getGameMode();
 		currTurn = simpleGame.getTurn();
@@ -108,18 +117,30 @@ public class Board extends JFrame {
 		setTitle("SOS Game");
 		setVisible(true);
 		if(GUI.compPlayer == 1) {
-			gameBoardCanvas.ComputerPlay();
+			int delay = 1000;
+			Timer timer = new Timer( delay, new ActionListener() {
+				public void actionPerformed(ActionEvent ae) {gameBoardCanvas.ComputerPlay();}
+			});
+			timer.setRepeats(false);
+			timer.start();
 			gameBoardCanvas.clear = false;
 		}
 		if(GUI.compPlayer == 3) {
-			while(gameBoardCanvas.winner == "") {
-				gameBoardCanvas.ComputerPlay();
-			}
+			java.util.Timer delay = new java.util.Timer();
+			delay.schedule(new TimerTask() {
+				public void run() {
+					gameBoardCanvas.ComputerPlay();
+					if(gameBoardCanvas.winner != "") {
+						delay.cancel();
+					}
+				}
+			}, 0, 1000);
 		}
 	}
 	
-	public Board(GeneralGame generalGame) {
+	public Board(GeneralGame generalGame, int replayBit) {
 		this.generalGame = generalGame;
+		this.replayBit = replayBit;
 		boardSize = generalGame.getBoardSize();
 		gameMode = generalGame.getGameMode();
 		currTurn = generalGame.getTurn();
@@ -129,14 +150,25 @@ public class Board extends JFrame {
 		pack(); 
 		setTitle("SOS Game");
 		setVisible(true); 
-		if(GUI.compPlayer == 1) {
-			gameBoardCanvas.ComputerPlay();
+		if(GUI.compPlayer == 1 && replayBit == 0) {
+			int delay = 1000;
+			Timer timer = new Timer( delay, new ActionListener() {
+				public void actionPerformed(ActionEvent ae) {gameBoardCanvas.ComputerPlay();}
+			});
+			timer.setRepeats(false);
+			timer.start();
 			gameBoardCanvas.clear = false;
 		}
-		if(GUI.compPlayer == 3) {
-			while(gameBoardCanvas.winner == "") {
-				gameBoardCanvas.ComputerPlay();
-			}
+		if(GUI.compPlayer == 3 && replayBit == 0) {
+			java.util.Timer delay = new java.util.Timer();
+			delay.schedule(new TimerTask() {
+				public void run() {
+					gameBoardCanvas.ComputerPlay();
+					if(gameBoardCanvas.winner != "") {
+						delay.cancel();
+					}
+				}
+			}, 0, 1000);
 		}
 	}
 	
@@ -268,6 +300,49 @@ public class Board extends JFrame {
 		}
 	}
 	
+	public void setCoordLog(ArrayList<int[]> coordLog) {
+		this.coordLog.addAll(coordLog);
+	}
+	
+	public void setMoveLog(ArrayList<Character> moveLog) {
+		this.moveLog.addAll(moveLog);
+	}
+	
+	public void replayGame() {
+		java.util.Timer delay = new java.util.Timer();
+		delay.schedule(new TimerTask() {
+			public void run() {
+				replayCoord = coordLog.get(iter);
+				replayMove = moveLog.get(iter);
+				System.out.println("Replaying: " + replayCoord[0] + "," + replayCoord[1] + "  " + replayMove); ;		//test
+				if(gameMode == 1) {
+					replayTemp = simpleGame.makeMove(replayCoord[0], replayCoord[1], replayMove);
+				}
+				else {
+					replayTemp = generalGame.makeMove(replayCoord[0], replayCoord[1], replayMove);
+				}
+				
+				while(!replayTemp.isEmpty()) {
+					drawQueue.add(replayTemp.remove(0));
+					turnQueue.add(currTurn);
+				}
+				if(gameMode == 1) {currTurn = simpleGame.getTurn();}
+				else			  {currTurn = generalGame.getTurn();}
+				repaint();
+				
+				iter++;
+				if(iter >= coordLog.size()) {
+					if(gameMode == 1) {gameBoardCanvas.winnerPopup(simpleGame.getWinner());}
+					else			  {gameBoardCanvas.winnerPopup(generalGame.getWinner());}
+					delay.cancel();
+					delay.purge();
+				}
+			}
+		}, 0, 1000);
+	}	
+
+	
+	
 
 	class GameBoardCanvas extends JPanel {
 
@@ -292,8 +367,23 @@ public class Board extends JFrame {
 					if(selectCol == -1 || selectRow == -1)   {return;}
 					
 					clear = HumanPlay(selectRow, selectCol);
-					if(GUI.compPlayer == 1 && clear == true) {ComputerPlay();}
-					if(GUI.compPlayer == 2 && clear == true) {ComputerPlay();}
+					repaint();
+					if(GUI.compPlayer == 1 && clear == true) {
+						int delay = 1000;
+						Timer timer = new Timer( delay, new ActionListener() {
+							public void actionPerformed(ActionEvent ae) {ComputerPlay();}
+						});
+						timer.setRepeats(false);
+						timer.start();
+					}
+					if(GUI.compPlayer == 2 && clear == true) {
+						int delay = 1000;
+						Timer timer = new Timer( delay, new ActionListener() {
+							public void actionPerformed(ActionEvent ae) {ComputerPlay();}
+						});
+						timer.setRepeats(false);
+						timer.start();
+					}
 					
 				}
 			});
@@ -376,6 +466,7 @@ public class Board extends JFrame {
 				selectRow = myAI.getPastY();
 				coordLog.add(new int[] {selectCol, selectRow});
 				moveLog.add(myAI.getMove());
+				repaint();
 			}
 			else {
 				if(gameMode == 1) {
@@ -533,7 +624,9 @@ public class Board extends JFrame {
 			else
 				JOptionPane.showMessageDialog(null, winner + " player won the game!",
 					  "Congratulation!", JOptionPane.INFORMATION_MESSAGE);
-			printLog();
+			if(GUI.recordOption == 1) {
+				printLog();	
+			}
 		}
 		
 		private void printLog() {
@@ -547,6 +640,11 @@ public class Board extends JFrame {
 			try {
 				BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 				int[] coord;
+				
+				writer.write("Board size: " + boardSize + "\n");
+				writer.write("Game mode: " + gameMode + "\n");
+				writer.write("Computer player: " + GUI.compPlayer + "\n");
+				
 				for(int i = 0; i < coordLog.size(); i++) {
 					coord = coordLog.get(i);
 					writer.write(player + ": (" + coord[0] + "," + coord[1] + ") " + moveLog.get(i) + "\n");

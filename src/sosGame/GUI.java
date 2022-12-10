@@ -21,12 +21,19 @@ import javax.swing.JTable;
 import javax.swing.JToggleButton;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
@@ -77,6 +84,7 @@ public class GUI extends JFrame {
 	private JButton startGameButton;
 	private JButton clearButton;
 	private JCheckBox recordCheck;
+	private JButton replayButton;
 	
 	 /*Create Frame */
 	public GUI() {
@@ -87,7 +95,7 @@ public class GUI extends JFrame {
 		//setup panel
 		setTitle("TicTacToe");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 400, 300);
+		setBounds(100, 100, 400, 350);
 		uiPanel = new JPanel();
 		uiPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(uiPanel);
@@ -192,12 +200,12 @@ public class GUI extends JFrame {
 							if(gameMode == 1) {
 								myGameSimple = new SimpleGame(boardSize);
 								myGameSimple.setGameMode(gameMode);
-								myBoard = new Board(myGameSimple);
+								myBoard = new Board(myGameSimple, 0);
 							}
 							else {
 								myGameGeneral = new GeneralGame(boardSize);
 								myGameGeneral.setGameMode(gameMode);
-								myBoard = new Board(myGameGeneral);
+								myBoard = new Board(myGameGeneral, 0);
 							}
 							setVisible(false);
 					}
@@ -219,8 +227,26 @@ public class GUI extends JFrame {
 				gameMode = 1;
 			}
 		});
-		clearButton.setBounds(200, 200, 120, 25);
+		clearButton.setBounds(120, 250, 120, 25);
 		uiPanel.add(clearButton);
+		
+		replayButton = new JButton("Replay Game");
+		replayButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(e.getSource() == replayButton) {
+					JFileChooser fileChooser = new JFileChooser();
+					int response = fileChooser.showOpenDialog(null);
+					if(response == JFileChooser.APPROVE_OPTION) {
+						recordCheck.setSelected(false);
+						recordOption = 0;
+						File file = new File(fileChooser.getSelectedFile().getAbsolutePath());
+						readFile(file);
+					}
+				}
+			}
+		});
+		replayButton.setBounds(200, 200, 120, 25);
+		uiPanel.add(replayButton);
 	}
 	
 		//Launch the application
@@ -231,6 +257,49 @@ public class GUI extends JFrame {
 						frame.setVisible(true);
 				}
 			});
+		}
+		
+		private void readFile(File file) {
+			String fileName = file.getName();
+			String line;
+			int replayBoardSize, replayGameMode;
+			char move;
+			ArrayList<int[]> coordLog = new ArrayList<>();
+			ArrayList<Character> moveLog = new ArrayList<>();
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(fileName));
+				
+				line = reader.readLine();
+				replayBoardSize = Character.getNumericValue(line.charAt(12));
+				line = reader.readLine();
+				replayGameMode = Character.getNumericValue(line.charAt(11));
+				line = reader.readLine();
+				compPlayer = Character.getNumericValue(line.charAt(17));
+				
+				while((line = reader.readLine()) != null) {
+					coordLog.add(new int[]  {Character.getNumericValue(line.charAt(7)), Character.getNumericValue(line.charAt(9))});
+					move = line.charAt(12);
+					moveLog.add(move);
+				}
+				
+				if(fileName.indexOf("Simple") != -1) {
+					myGameSimple = new SimpleGame(replayBoardSize);
+					myGameSimple.setGameMode(replayGameMode);
+					myBoard = new Board(myGameSimple, 1);
+				}
+				else if(fileName.indexOf("General") != -1) {
+					myGameGeneral = new GeneralGame(replayBoardSize);
+					myGameGeneral.setGameMode(replayGameMode);
+					myBoard = new Board(myGameGeneral, 1);
+				}
+				setVisible(false);
+				myBoard.setCoordLog(coordLog);
+				myBoard.setMoveLog(moveLog);
+				myBoard.replayGame();
+				reader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 }
 
